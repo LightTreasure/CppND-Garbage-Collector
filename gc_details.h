@@ -10,7 +10,7 @@ class PtrDetails
 
     // pointer to allocated memory 
     T *memPtr;
-    
+
     /* isArray is true if memPtr points
     to an allocated array. It is false
     otherwise. */
@@ -20,13 +20,20 @@ class PtrDetails
     array, then arraySize contains its size */
     unsigned arraySize;
 
-    // Here, mPtr points to the allocated memory.
-    // If this is an array, then size specifies
-    // the size of the array.
-
     PtrDetails(void)
     {
-        // TODO: Implement PtrDetails
+        refcount = 0;
+        memPtr = nullptr;
+        isArray = false;
+        arraySize = 0;
+    }
+
+    PtrDetails(T* ptr, unsigned size = 0)
+    {
+        refcount = 1;
+        memPtr = ptr;
+        isArray = (size > 0);
+        arraySize = size;
     }
 };
 
@@ -36,5 +43,7 @@ template <class T>
 bool operator==(const PtrDetails<T> &ob1,
                 const PtrDetails<T> &ob2)
 {
-    // TODO: Implement operator==
+    // Currently this ignores all the other members of PtrDetails.
+    // TODO: find if it's necessary to check the other members of PtrDetails
+    return (ob1.memPtr == ob2.memPtr);
 }
