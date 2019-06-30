@@ -5,15 +5,21 @@ template <class T>
 class PtrDetails
 {
   public:
-    unsigned refcount; // current reference count
-    T *memPtr;         // pointer to allocated memory
+    // current reference count
+    unsigned refcount;
+
+    // pointer to allocated memory 
+    T *memPtr;
+    
     /* isArray is true if memPtr points
-to an allocated array. It is false
-otherwise. */
-    bool isArray; // true if pointing to array
+    to an allocated array. It is false
+    otherwise. */
+    bool isArray;
+
     /* If memPtr is pointing to an allocated
-array, then arraySize contains its size */
-    unsigned arraySize; // size of array
+    array, then arraySize contains its size */
+    unsigned arraySize;
+
     // Here, mPtr points to the allocated memory.
     // If this is an array, then size specifies
     // the size of the array.
@@ -23,6 +29,7 @@ array, then arraySize contains its size */
         // TODO: Implement PtrDetails
     }
 };
+
 // Overloading operator== allows two class objects to be compared.
 // This is needed by the STL list class.
 template <class T>
