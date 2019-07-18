@@ -38,12 +38,15 @@ class PtrDetails
 };
 
 // Overloading operator== allows two class objects to be compared.
-// This is needed by the STL list class.
+// This is needed because the refContainer in the Pointer class is an STL list of PtrDetails
+// and the type contained within a STL list class must have a == operator defined. 
 template <class T>
 bool operator==(const PtrDetails<T> &ob1,
                 const PtrDetails<T> &ob2)
 {
-    // Currently this ignores all the other members of PtrDetails.
-    // TODO: find if it's necessary to check the other members of PtrDetails
+    // Only compares memPtr because it is not possible to have two different Iters 
+    // with the same memPtr value but differing values for other attributes.
+    // This is true even for arrays as the Pointer class does not allow pointing to 
+    // a specific place within an array created via Pointer.
     return (ob1.memPtr == ob2.memPtr);
 }

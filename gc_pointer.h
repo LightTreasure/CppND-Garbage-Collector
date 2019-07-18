@@ -137,14 +137,14 @@ template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
     // Since we're creating a copy of an existing Pointer, we will already
     // have a PtrDetails in refContainer associated with it. All that we
-    // need to do now is to increment the reference count for this memory address.
+    // need to do now is to increment the reference count for that memory address.
     typename std::list<PtrDetails<T> >::iterator p;
     p = findPtrInfo(ob.addr);
 
     p->refcount++;
 
     // Now just copy over the rest of the members of the Pointer.
-    addr = ob.adr;
+    addr = ob.addr;
     isArray = ob.isArray;
     arraySize = ob.arraySize;
 }
@@ -152,26 +152,66 @@ Pointer<T,size>::Pointer(const Pointer &ob){
 // Destructor for Pointer.
 template <class T, int size>
 Pointer<T, size>::~Pointer(){
-    
-    // TODO: Implement Pointer destructor
-    // Lab: New and Delete Project Lab
+    // This pointer is going out of scope. Which means the location
+    // it points to has reference count lowered by 1.
+    typename std::list<PtrDetails<T> >::iterator p;
+    p = findPtrInfo(addr);
+    p->refcount--;
+
+    // This is where we call collect() for this Garbage Collector. 
+    // Not exactly the most efficient location, but for this project that's fine.
+    collect();
 }
 
 // Collect garbage. Returns true if at least
 // one object was freed.
 template <class T, int size>
 bool Pointer<T, size>::collect(){
+    bool memfreed = false;
+    typename std::list<PtrDetails<T> >::iterator p;
+    // Go through all the elements of refContainer and see 
+    // if any of them has refcount = 0. If it does, delete it.
+    // Note: The double loop is needed because refContainer is an STL list
+    // and we alter it while iterating through it. So we need to restart
+    // the search every time.
+    do {
+        // Scan refContainer looking for unreferenced pointers.
+        for (p = refContainer.begin(); p != refContainer.end(); p++){
+            // Skip locations that are being used
+            if (p->refcount > 0)
+            {
+                continue;
+            }
+            
+            // If we're here, that means the location has 0 refcount. Delete it!
+            // First, remove unused entry from refContainer.
+            refContainer.erase(p)
 
-    // TODO: Implement collect function
-    // LAB: New and Delete Project Lab
-    // Note: collect() will be called in the destructor
-    return false;
+            // Now, delete the memory unless the Pointer is null.
+            if (p->memPtr != nullptr)
+            {
+                if (p->isArray)
+                {
+                    delete[] p->memPtr;
+                }
+                else
+                {
+                    delete p;
+                }
+                memfreed = true;
+            }
+            
+            // Restart the search.
+            break;
+        }
+    } while (p != refContainer.end());
+
+    return memfreed;
 }
 
 // Overload assignment of pointer to Pointer.
 template <class T, int size>
 T *Pointer<T, size>::operator=(T *t){
-
     // TODO: Implement operator==
     // LAB: Smart Pointer Project Lab
 
@@ -180,9 +220,22 @@ T *Pointer<T, size>::operator=(T *t){
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
 Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
+    // We want this Pointer to point to the same location as rv.
+    // Because we will be doing that, the refcount of that location will go down by 1.
+    typename std::list<PtrDetails<T> >::iterator oldloc;
+    oldloc = findPtrInfo(addr);
+    oldloc->refcount--;
 
-    // TODO: Implement operator==
-    // LAB: Smart Pointer Project Lab
+    // Now that we have dealt with the old location, we want this Pointer to
+    // reference the same location as rv. Which means that location's refcount goes up by 1.
+    typename std::list<PtrDetails<T> >::iterator newloc;
+    newloc = findPtrInfo(rv.addr);
+    newloc->refcount++;
+
+    // Now just copy over the rest of the members of the Pointer.
+    addr = rv.addr;
+    isArray = rv.isArray;
+    arraySize = rv.arraySize;
 
 }
 
