@@ -5,7 +5,7 @@ template <class T>
 class PtrDetails
 {
   public:
-    // current reference count
+    // current reference count <-- This is the main purpose of this class.
     unsigned refcount;
 
     // pointer to allocated memory 

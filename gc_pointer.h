@@ -135,10 +135,18 @@ Pointer<T,size>::Pointer(T *t){
 // Copy constructor.
 template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
+    // Since we're creating a copy of an existing Pointer, we will already
+    // have a PtrDetails in refContainer associated with it. All that we
+    // need to do now is to increment the reference count for this memory address.
+    typename std::list<PtrDetails<T> >::iterator p;
+    p = findPtrInfo(ob.addr);
 
-    // TODO: Implement Pointer constructor
-    // Lab: Smart Pointer Project Lab
+    p->refcount++;
 
+    // Now just copy over the rest of the members of the Pointer.
+    addr = ob.adr;
+    isArray = ob.isArray;
+    arraySize = ob.arraySize;
 }
 
 // Destructor for Pointer.
