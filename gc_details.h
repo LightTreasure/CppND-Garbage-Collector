@@ -35,6 +35,14 @@ class PtrDetails
         isArray = (size > 0);
         arraySize = size;
     }
+
+    void decrementRefCount()
+    {
+        if (refcount != 0)
+        {
+            refcount--;
+        }
+    }
 };
 
 // Overloading operator== allows two class objects to be compared.

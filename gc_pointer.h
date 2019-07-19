@@ -183,7 +183,7 @@ Pointer<T, size>::~Pointer(){
     p = findPtrInfo(addr);
     if (p != refContainer.end())
     {
-        p->refcount--;
+        p->decrementRefCount();
     }
 
     // This is where we call collect() for this Garbage Collector. 
@@ -206,34 +206,36 @@ bool Pointer<T, size>::collect(){
         // Scan refContainer looking for unreferenced pointers.
         for (p = refContainer.begin(); p != refContainer.end(); p++){
             // Skip locations that are being used
-            if (p->refcount > 0)
+            if (p->refcount == 0)
             {
+                // If we're here, that means the location has 0 refcount. Delete it!
+                // First, remove unused entry from refContainer.
+                refContainer.erase(p);
+
+                // Now, delete the memory unless the Pointer is null.
+                if (p->memPtr != nullptr)
+                {
+                    if (p->isArray)
+                    {
+                        delete[] p->memPtr;
+                    }
+                    else
+                    {
+                        delete p->memPtr;
+                    }
+                    memfreed = true;
+                }
+
+                // Restart the search.
+                break;
+            }
+            else
+            {
+                // if not 0 refcount, go ahead in the for loop.
                 continue;
             }
-            
-            // If we're here, that means the location has 0 refcount. Delete it!
-            // First, remove unused entry from refContainer.
-            refContainer.erase(p);
-
-            // Now, delete the memory unless the Pointer is null.
-            if (p->memPtr != nullptr)
-            {
-                if (p->isArray)
-                {
-                    delete[] p->memPtr;
-                }
-                else
-                {
-                    delete p->memPtr;
-                }
-                memfreed = true;
-            }
-            
-            // Restart the search.
-            break;
         }
     } while (p != refContainer.end());
-
     return memfreed;
 }
 
@@ -247,7 +249,7 @@ T *Pointer<T, size>::operator=(T *t){
     oldloc = findPtrInfo(addr);
     if (oldloc != refContainer.end())
     {
-        oldloc->refcount--;
+        oldloc->decrementRefCount();
     }
 
     // Now, construct the Pointer object by copying in the relevant attributes
@@ -290,7 +292,7 @@ Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     oldloc = findPtrInfo(addr);
     if (oldloc != refContainer.end())
     {
-        oldloc->refcount--;
+        oldloc->decrementRefCount();
     }
 
     // Now that we have dealt with the old location, we want this Pointer to
@@ -325,7 +327,7 @@ void Pointer<T, size>::showlist(){
         std::cout << "[" << (void *)p->memPtr << "]"
              << " " << p->refcount << " ";
         if (p->memPtr)
-            std::cout << " " << *p->memPtr;
+            std::cout << " " << p->memPtr;
         else
             std::cout << "---";
         std::cout << std::endl;
