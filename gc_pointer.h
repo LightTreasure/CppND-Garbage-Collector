@@ -127,21 +127,46 @@ Pointer<T,size>::Pointer(T *t){
         atexit(shutdown);
     first = false;
 
-    // TODO: Implement Pointer constructor
-    // Lab: Smart Pointer Project Lab
+    // First, construct the Pointer object by copying in the relevant attributes
+    addr = t;
+    arraySize = size;
+    isArray = (size > 0);
 
+    // Second, we need to ensure that our garbage collection takes care of this memory
+    // If we're already doing that, great! Just increment the refcount. That is, if we already
+    // have this memory in our refContainer, all we need to do is to increment the refcount. So let's check:
+    typename std::list<PtrDetails<T> >::iterator p;
+    p = findPtrInfo(t); // returns refContainer.end() if it cant' find that pointer
+
+    // If we aren't tracking that memory in refContainer, add to it
+    if (p == refContainer.end())
+    {
+        // Create a PtrDetails object of the same type and size from the raw pointer
+        // This also initializes the refCount, so we don't have to worry about it here.
+        PtrDetails<T> pDet(t, size);
+
+        // Push it into the refContainer list
+        refContainer.push_back(pDet);
+    }
+    else
+    {
+        // This memory is already being tracked by refContainer... just refcount it.
+        p->refCount++;
+    }
 }
 
 // Copy constructor.
 template< class T, int size>
 Pointer<T,size>::Pointer(const Pointer &ob){
-    // Since we're creating a copy of an existing Pointer, we will already
+    // Since we're creating a copy of an existing Pointer, we might already
     // have a PtrDetails in refContainer associated with it. All that we
-    // need to do now is to increment the reference count for that memory address.
+    // need to do now is to increment the reference count for that memory address 
     typename std::list<PtrDetails<T> >::iterator p;
     p = findPtrInfo(ob.addr);
-
-    p->refcount++;
+    if (p != refContainer.end())
+    {
+        p->refcount++;
+    }
 
     // Now just copy over the rest of the members of the Pointer.
     addr = ob.addr;
@@ -156,7 +181,10 @@ Pointer<T, size>::~Pointer(){
     // it points to has reference count lowered by 1.
     typename std::list<PtrDetails<T> >::iterator p;
     p = findPtrInfo(addr);
-    p->refcount--;
+    if (p != refContainer.end())
+    {
+        p->refcount--;
+    }
 
     // This is where we call collect() for this Garbage Collector. 
     // Not exactly the most efficient location, but for this project that's fine.
@@ -212,31 +240,74 @@ bool Pointer<T, size>::collect(){
 // Overload assignment of pointer to Pointer.
 template <class T, int size>
 T *Pointer<T, size>::operator=(T *t){
-    // TODO: Implement operator==
-    // LAB: Smart Pointer Project Lab
+    // We want this Pointer to point to the same location as t.
+    // Because we will be doing that, the refcount of the location 
+    // that this pointer currently points to (if it exists) will go down by 1.
+    typename std::list<PtrDetails<T> >::iterator oldloc;
+    oldloc = findPtrInfo(addr);
+    if (oldloc != refContainer.end())
+    {
+        oldloc->refcount--;
+    }
 
+    // Now, construct the Pointer object by copying in the relevant attributes
+    addr = t;
+    arraySize = size;
+    isArray = (size > 0);
+
+    // Finally, we need to ensure that our garbage collection takes care of this memory
+    // If we're already doing that, great! Just increment the refcount. That is, if we already
+    // have this memory in our refContainer, all we need to do is to increment the refcount. So let's check:
+    typename std::list<PtrDetails<T> >::iterator p;
+    p = findPtrInfo(t); // returns refContainer.end() if it cant' find that pointer
+
+    // If we aren't tracking that memory in refContainer, add to it
+    if (p == refContainer.end())
+    {
+        // Create a PtrDetails object of the same type and size from the raw pointer
+        // This also initializes the refCount, so we don't have to worry about it here.
+        PtrDetails<T> pDet(t, size);
+
+        // Push it into the refContainer list
+        refContainer.push_back(pDet);
+    }
+    else
+    {
+        // This memory is already being tracked by refContainer... just refcount it.
+        p->refCount++;
+    }
+
+    return t;
 }
 
 // Overload assignment of Pointer to Pointer.
 template <class T, int size>
 Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     // We want this Pointer to point to the same location as rv.
-    // Because we will be doing that, the refcount of that location will go down by 1.
+    // Because we will be doing that, the refcount of the currently
+    // pointed location (if it exists) will go down by 1.
     typename std::list<PtrDetails<T> >::iterator oldloc;
     oldloc = findPtrInfo(addr);
-    oldloc->refcount--;
+    if (oldloc != refContainer.end())
+    {
+        oldloc->refcount--;
+    }
 
     // Now that we have dealt with the old location, we want this Pointer to
-    // reference the same location as rv. Which means that location's refcount goes up by 1.
+    // reference the same location as rv. Which means that location's (if it exists) refcount goes up by 1.
     typename std::list<PtrDetails<T> >::iterator newloc;
     newloc = findPtrInfo(rv.addr);
-    newloc->refcount++;
+    if (newloc != refContainer.end())
+    {
+        newloc->refcount++;
+    }
 
     // Now just copy over the rest of the members of the Pointer.
     addr = rv.addr;
     isArray = rv.isArray;
     arraySize = rv.arraySize;
 
+    rerurn *this;
 }
 
 // A utility function that displays refContainer.
