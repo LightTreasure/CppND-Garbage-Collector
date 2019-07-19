@@ -142,7 +142,7 @@ Pointer<T,size>::Pointer(T *t){
     if (p == refContainer.end())
     {
         // Create a PtrDetails object of the same type and size from the raw pointer
-        // This also initializes the refCount, so we don't have to worry about it here.
+        // This also initializes the refcount, so we don't have to worry about it here.
         PtrDetails<T> pDet(t, size);
 
         // Push it into the refContainer list
@@ -151,7 +151,7 @@ Pointer<T,size>::Pointer(T *t){
     else
     {
         // This memory is already being tracked by refContainer... just refcount it.
-        p->refCount++;
+        p->refcount++;
     }
 }
 
@@ -213,7 +213,7 @@ bool Pointer<T, size>::collect(){
             
             // If we're here, that means the location has 0 refcount. Delete it!
             // First, remove unused entry from refContainer.
-            refContainer.erase(p)
+            refContainer.erase(p);
 
             // Now, delete the memory unless the Pointer is null.
             if (p->memPtr != nullptr)
@@ -224,7 +224,7 @@ bool Pointer<T, size>::collect(){
                 }
                 else
                 {
-                    delete p;
+                    delete p->memPtr;
                 }
                 memfreed = true;
             }
@@ -265,7 +265,7 @@ T *Pointer<T, size>::operator=(T *t){
     if (p == refContainer.end())
     {
         // Create a PtrDetails object of the same type and size from the raw pointer
-        // This also initializes the refCount, so we don't have to worry about it here.
+        // This also initializes the refcount, so we don't have to worry about it here.
         PtrDetails<T> pDet(t, size);
 
         // Push it into the refContainer list
@@ -274,7 +274,7 @@ T *Pointer<T, size>::operator=(T *t){
     else
     {
         // This memory is already being tracked by refContainer... just refcount it.
-        p->refCount++;
+        p->refcount++;
     }
 
     return t;
@@ -307,7 +307,7 @@ Pointer<T, size> &Pointer<T, size>::operator=(Pointer &rv){
     isArray = rv.isArray;
     arraySize = rv.arraySize;
 
-    rerurn *this;
+    return *this;
 }
 
 // A utility function that displays refContainer.
